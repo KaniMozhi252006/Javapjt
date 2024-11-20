@@ -1,9 +1,9 @@
 package Shopping;
-
 import java.awt.*;
 import java.awt.event.*;
-import java.net.URL;
+import javax.swing.*;
 import java.util.ArrayList;
+import java.net.URL;
 
 class Medicine {
     String name;
@@ -21,16 +21,29 @@ class Medicine {
 }
 
 class ShoppingCart {
+    ArrayList<Medicine> medicineCatalog = new ArrayList<>();
     ArrayList<Medicine> cart = new ArrayList<>();
 
+    public ShoppingCart() {
+        // Predefined medicines and their prices
+        medicineCatalog.add(new Medicine("Aspirin", 10.0));
+        medicineCatalog.add(new Medicine("Paracetamol", 5.0));
+        medicineCatalog.add(new Medicine("Ibuprofen", 7.0));
+        medicineCatalog.add(new Medicine("Amoxicillin", 15.0));
+        medicineCatalog.add(new Medicine("Cough Syrup", 8.0));
+    }
+
+    // Add medicine to the cart
     void add(Medicine medicine) {
         cart.add(medicine);
     }
 
+    // Remove medicine from the cart
     void remove(Medicine medicine) {
         cart.remove(medicine);
     }
 
+    // Get total price of the cart
     double total() {
         double total = 0;
         for (Medicine m : cart) {
@@ -39,91 +52,184 @@ class ShoppingCart {
         return total;
     }
 
+    // Get the list of medicines in the cart
     ArrayList<Medicine> getItems() {
         return cart;
     }
+
+    // Linear search to find a medicine by name
+    Medicine searchMedicineByName(String name) {
+        for (Medicine m : medicineCatalog) {
+            if (m.name.equalsIgnoreCase(name)) {
+                return m;
+            }
+        }
+        return null;
+    }
 }
 
-public class ShoppingCartApp extends Frame implements ActionListener {
-    private static final long serialVersionUID = 1L;
-    TextField medNameField, medPriceField;
-    TextArea cartDisplay;
+public class ShoppingCartApp extends JFrame implements ActionListener {
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	// Declare UI components for both pages
+    JTextField medNameField, medPriceField, searchField;
+    JTextArea cartDisplay;
+    JButton addButton, viewButton, removeButton, totalButton, searchButton, backButton;
     ShoppingCart cart;
-    Image bgImage;
+    CardLayout cardLayout;
+    JPanel mainPanel, welcomePanel, shoppingCartPanel;
 
     public ShoppingCartApp() {
         cart = new ShoppingCart();
 
-        // Load the background image from a URL
-        try {
-            URL imageUrl = new URL("https://img.freepik.com/premium-photo/pharmacy-shopping-online-grocery-cart-with-medicine-pills_96727-2449.jpg"); // Replace with your image URL
-            bgImage = Toolkit.getDefaultToolkit().getImage(imageUrl);
-        } catch (Exception e) {
-            System.out.println("Error loading image: " + e.getMessage());
-        }
+        // page switch
+        cardLayout = new CardLayout();
+        mainPanel = new JPanel(cardLayout);
 
-        setLayout(new FlowLayout());
-        setSize(400, 300);
-        setTitle("Shopping Cart System");
+        // front
+        welcomePanel = new JPanel() {
+            /**
+			 * 
+			 */
+			private static final long serialVersionUID = 1L;
 
-        Label medNameLabel = new Label("Medicine Name:");
-        add(medNameLabel);
-        medNameField = new TextField(15);
-        add(medNameField);
-
-        Label medPriceLabel = new Label("Price:");
-        add(medPriceLabel);
-        medPriceField = new TextField(5);
-        add(medPriceField);
-
-        Button addButton = new Button("Add to Cart");
-        addButton.addActionListener(this);
-        add(addButton);
-
-        Button viewButton = new Button("View Cart");
-        viewButton.addActionListener(this);
-        add(viewButton);
-
-        Button removeButton = new Button("Remove Item");
-        removeButton.addActionListener(this);
-        add(removeButton);
-
-        Button totalButton = new Button("Calculate Total");
-        totalButton.addActionListener(this);
-        add(totalButton);
-
-        cartDisplay = new TextArea(10, 30);
-        add(cartDisplay);
-
-        addWindowListener(new WindowAdapter() {
-            public void windowClosing(WindowEvent we) {
-                dispose();
+			@Override
+            public void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                // Set background image
+                try {
+                    URL url = new URL("https://pngimg.com/uploads/shopping_cart/shopping_cart_PNG36.png");
+                    Image img = Toolkit.getDefaultToolkit().getImage(url);
+                    g.drawImage(img, 0, 0, getWidth(), getHeight(), this);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
-        });
+        };
+        welcomePanel.setLayout(new BoxLayout(welcomePanel, BoxLayout.Y_AXIS));
+        welcomePanel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
+        JLabel welcomeLabel = new JLabel("Medicine Shopping Cart");
+        welcomeLabel.setFont(new Font("Arial", Font.BOLD, 24));
+        welcomeLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        JButton goToShoppingCartButton = new JButton("Go to Shopping Cart");
+        goToShoppingCartButton.addActionListener(this);
+
+        welcomePanel.add(welcomeLabel);
+        welcomePanel.add(Box.createVerticalStrut(40));
+        welcomePanel.add(goToShoppingCartButton);
+
+        // cart panel
+        shoppingCartPanel = new JPanel();
+        shoppingCartPanel.setLayout(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.anchor = GridBagConstraints.CENTER;
+        gbc.insets = new Insets(5, 5, 5, 5);  // Spacing between components
+
+        // Back Button
+        backButton = new JButton("Back");
+        backButton.addActionListener(this);
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.gridwidth = 1; // Reset gridwidth
+        gbc.anchor = GridBagConstraints.WEST; // left alignment
+        shoppingCartPanel.add(backButton, gbc);
+
+        // Medicine Name Input area
+        JLabel medNameLabel = new JLabel("Medicine Name:");
+        gbc.gridx = 1;
+        gbc.gridy = 0;
+        gbc.anchor = GridBagConstraints.CENTER;
+        shoppingCartPanel.add(medNameLabel, gbc);
+        medNameField = new JTextField(15);
+        gbc.gridx = 2;
+        shoppingCartPanel.add(medNameField, gbc);
+
+        // Price
+        JLabel medPriceLabel = new JLabel("Price:");
+        gbc.gridx = 1;
+        gbc.gridy = 1;
+        shoppingCartPanel.add(medPriceLabel, gbc);
+        medPriceField = new JTextField(5);
+        medPriceField.setEditable(false);
+        gbc.gridx = 2;
+        shoppingCartPanel.add(medPriceField, gbc);
+
+        // Search box
+        JLabel searchLabel = new JLabel("Search Medicine:");
+        gbc.gridx = 1;
+        gbc.gridy = 2;
+        shoppingCartPanel.add(searchLabel, gbc);
+        searchField = new JTextField(15);
+        gbc.gridx = 2;
+        shoppingCartPanel.add(searchField, gbc);
+        searchButton = new JButton("Search");
+        searchButton.addActionListener(this);
+        gbc.gridx = 3;
+        shoppingCartPanel.add(searchButton, gbc);
+
+        //Buttons
+        addButton = new JButton("Add to Cart");
+        addButton.addActionListener(this);
+        gbc.gridx = 1;
+        gbc.gridy = 3;
+        shoppingCartPanel.add(addButton, gbc);
+
+        viewButton = new JButton("View Cart");
+        viewButton.addActionListener(this);
+        gbc.gridx = 2;
+        shoppingCartPanel.add(viewButton, gbc);
+
+        removeButton = new JButton("Remove Item");
+        removeButton.addActionListener(this);
+        gbc.gridx = 3;
+        shoppingCartPanel.add(removeButton, gbc);
+
+        totalButton = new JButton("Calculate Total");
+        totalButton.addActionListener(this);
+        gbc.gridx = 2;
+        gbc.gridy = 4;
+        shoppingCartPanel.add(totalButton, gbc);
+
+        //Display
+        cartDisplay = new JTextArea(10, 40);
+        cartDisplay.setEditable(false);
+        JScrollPane scrollPane = new JScrollPane(cartDisplay);
+        gbc.gridx = 1;
+        gbc.gridy = 5;
+        gbc.gridwidth = 3;
+        shoppingCartPanel.add(scrollPane, gbc);
+
+        // Add both panels to the card layout container
+        mainPanel.add(welcomePanel, "Welcome");
+        mainPanel.add(shoppingCartPanel, "Shopping Cart");
+
+        // layout/size
+        this.add(mainPanel);
+        cardLayout.show(mainPanel, "Welcome");
+        setSize(600, 500);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setVisible(true);
-    }
-
-    @Override
-    public void paint(Graphics g) {
-        // Draw the background image
-        if (bgImage != null) {
-            g.drawImage(bgImage, 0, 0, getWidth(), getHeight(), this);
-        }
-        super.paint(g);
     }
 
     public void actionPerformed(ActionEvent e) {
         String command = e.getActionCommand();
-        if (command.equals("Add to Cart")) {
+
+        if (command.equals("Go to Shopping Cart")) {
+            cardLayout.show(mainPanel, "Shopping Cart");
+        } else if (command.equals("Back")) {
+            cardLayout.show(mainPanel, "Welcome");
+        } else if (command.equals("Add to Cart")) {
             String name = medNameField.getText();
-            double price;
-            try {
-                price = Double.parseDouble(medPriceField.getText());
-                cart.add(new Medicine(name, price));
-                cartDisplay.append(name + " added to cart.\n");
-            } catch (NumberFormatException ex) {
-                cartDisplay.append("Invalid price.\n");
+            Medicine medicine = cart.searchMedicineByName(name);
+            if (medicine != null) {
+                cart.add(medicine);
+                cartDisplay.append(medicine.name + " added to cart.\n");
+            } else {
+                cartDisplay.append("Medicine not found.\n");
             }
         } else if (command.equals("View Cart")) {
             cartDisplay.setText("");
@@ -132,17 +238,26 @@ public class ShoppingCartApp extends Frame implements ActionListener {
             }
         } else if (command.equals("Remove Item")) {
             String name = medNameField.getText();
-            for (Medicine m : cart.getItems()) {
-                if (m.name.equalsIgnoreCase(name)) {
-                    cart.remove(m);
-                    cartDisplay.append(name + " removed from cart.\n");
-                    return;
-                }
+            Medicine medicine = cart.searchMedicineByName(name);
+            if (medicine != null) {
+                cart.remove(medicine);
+                cartDisplay.append(medicine.name + " removed from cart.\n");
+            } else {
+                cartDisplay.append("Item not found in cart.\n");
             }
-            cartDisplay.append("Item not found in cart.\n");
         } else if (command.equals("Calculate Total")) {
             double total = cart.total();
             cartDisplay.append("Total: $" + total + "\n");
+        } else if (command.equals("Search")) {
+            String searchTerm = searchField.getText();
+            Medicine searchedMedicine = cart.searchMedicineByName(searchTerm);
+            cartDisplay.setText("");  // Clear display
+            if (searchedMedicine != null) {
+                medPriceField.setText(String.valueOf(searchedMedicine.price));
+                cartDisplay.append("Found in catalog: " + searchedMedicine.toString() + "\n");
+            } else {
+                cartDisplay.append("Medicine not found.\n");
+            }
         }
     }
 
